@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Raccogli la Frutta Timer 🍎⏱️</title>
+<style>
+body {
+  margin:0; padding:0;
+  font-family: Arial, sans-serif;
+  text-align:center;
+  background: linear-gradient(to bottom, #87ceeb, #b3e5fc);
+  overflow: hidden;
+}
+h1 { color:#ff3366; margin-top:10px;}
+#score, #timer { font-size:20px; color:#ff3366; margin:5px;}
+#gameArea {
+  width: 400px;
+  height: 500px;
+  margin:auto;
+  background: linear-gradient(to bottom, #b3f0c0, #fff);
+  border: 4px solid #ff3366;
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  border-radius: 15px;
+}
+.player {
+  width:50px;
+  height:50px;
+  position:absolute;
+  bottom:10px;
+  left:175px;
+  font-size:50px;
+  text-align:center;
+}
+.item {
+  position:absolute;
+  font-size:40px;
+}
+#controls {
+  margin-top:10px;
+}
+.control-btn {
+  font-size:24px;
+  width:60px;
+  height:60px;
+  margin:5px;
+  background:#ff3366;
+  color:white;
+  border:none;
+  border-radius:10px;
+}
+#message, #instructions { font-size:20px; color:#ff3366; margin-top:10px; }
+.time-btn { margin:5px; padding:10px 20px; font-size:18px; background:#ff3366; color:white; border:none; border-radius:10px; }
+</style>
+</head>
+<body>
+
+<h1>Raccogli la Frutta! 🍎</h1>
+<div id="instructions">
+<p>Benvenuto! 🧑‍🌾</p>
+<p>Regole:</p>
+<ul style="list-style:none; padding-left:0;">
+<li>- Raccogli la frutta 🍎🍌🍇🍓 per guadagnare punti</li>
+<li>- Evita le bombe 💣, ti fanno perdere punti</li>
+<li>- La frutta cade sempre più veloce</li>
+<li>- Usa le frecce ← → o i pulsanti ⬅️ ➡️ per muoverti</li>
+<li>- Alla fine del tempo, il punteggio determinerà se hai vinto o perso</li>
+</ul>
+<p>Scegli il tempo del gioco:</p>
+<button class="time-btn" data-time="30">30 secondi</button>
+<button class="time-btn" data-time="50">50 secondi</button>
+<button class="time-btn" data-time="60">60 secondi</button>
+</div>
+
+<div id="score">Punti: 0</div>
+<div id="timer">Tempo: 0s</div>
+<div id="gameArea" style="display:none;">
+  <div class="player" id="player">🧑‍🌾</div>
+</div>
+<div id="controls" style="display:none;">
+  <button class="control-btn" id="left">⬅️</button>
+  <button class="control-btn" id="right">➡️</button>
+</div>
+<div id="message"></div>
+
+<script>
+const gameArea = document.getElementById("gameArea");
+const player = document.getElementById("player");
+const scoreEl = document.getElementById("score");
+const timerEl = document.getElementById("timer");
+const messageEl = document.getElementById("message");
+const instructionsEl = document.getElementById("instructions");
+
+const AREA_WIDTH = 400;
+const AREA_HEIGHT = 500;
+
+let score = 0;
+let playerX = 175;
+let totalTime = 30;
+let remainingTime = 30;
+let items = [];
+
+const FRUTTA = ['🍎','🍌','🍇','🍓'];
+const BOMBA = '💣';
+let spawnInterval, moveInterval, timerInterval;
+
+// Movimento giocatore
+function movePlayer(dir){
+  playerX += dir*20;
+  if(playerX<0) playerX=0;
+  if(playerX>AREA_WIDTH-50) playerX=AREA_WIDTH-50;
+  player.style.left = playerX + "px";
+}
+
+// Aggiungi oggetto
+function spawnItem(){
+  const div = document.createElement("div");
+  div.classList.add("item");
+  const isBomb = Math.random()<0.2;
+  div.innerText = isBomb ? BOMBA : FRUTTA[Math.floor(Math.random()*FRUTTA.length)];
+  div.style.left = Math.random()*(AREA_WIDTH-40) + "px";
+  div.style.top = "-50px";
+  gameArea.appendChild(div);
+  items.push({el:div,isBomb:isBomb});
+}
+
+// Velocità caduta aumenta con il tempo
+function moveItems(){
+  let speed = 2 + (totalTime - remainingTime)/totalTime * 5;
+  for(let i=items.length-1;i>=0;i--){
+    let obj = items[i];
+    let top = parseInt(obj.el.style.top);
+    top += speed;
+    obj.el.style.top = top + "px";
+
+    if(top+40 >= AREA_HEIGHT-60 && top <= AREA_HEIGHT-10){
+      let objX = parseInt(obj.el.style.left);
+      if(objX+40 >= playerX && objX <= playerX+50){
+        if(obj.isBomb){ score -= 5; }
+        else{ score += 10; }
+        scoreEl.innerText = "Punti: "+score;
+        obj.el.remove();
+        items.splice(i,1);
+        continue;
+      }
+    }
+
+    if(top>AREA_HEIGHT){
+      obj.el.remove();
+      items.splice(i,1);
+    }
+  }
+}
+
+// Controlli tastiera
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="ArrowLeft") movePlayer(-1);
+  if(e.key==="ArrowRight") movePlayer(1);
+});
+
+// Controlli touch
+document.getElementById("left").addEventListener("click",()=>movePlayer(-1));
+document.getElementById("right").addEventListener("click",()=>movePlayer(1));
+
+// Funzione per iniziare il gioco
+function startGame(time){
+  totalTime = time;
+  remainingTime = time;
+  instructionsEl.style.display="none";
+  gameArea.style.display="block";
+  document.getElementById("controls").style.display="block";
+  scoreEl.innerText = "Punti: 0";
+  messageEl.innerText = "";
+
+  spawnInterval = setInterval(spawnItem, 800);
+  moveInterval = setInterval(moveItems, 50);
+
+  timerInterval = setInterval(()=>{
+    remainingTime--;
+    timerEl.innerText = "Tempo: "+remainingTime+"s";
+    if(remainingTime<=0){
+      clearInterval(timerInterval);
+      clearInterval(spawnInterval);
+      clearInterval(moveInterval);
+      endGame();
+    }
+  },1000);
+}
+
+// Fine gioco
+function endGame(){
+  if(score < totalTime*5){
+    messageEl.innerHTML = "💥 Hai perso! Riprova!";
+    for(let i=0;i<20;i++){
+      let boom = document.createElement("div");
+      boom.classList.add("item");
+      boom.innerText = "💥";
+      boom.style.left = Math.random()*(AREA_WIDTH-40)+"px";
+      boom.style.top = Math.random()*(AREA_HEIGHT-50)+"px";
+      gameArea.appendChild(boom);
+    }
+  } else {
+    messageEl.innerHTML = "🎉 Sei bravo! Punti: "+score;
+  }
+}
+
+// Pulsanti tempo
+document.querySelectorAll(".time-btn").forEach(btn=>{
+  btn.addEventListener("click",()=> startGame(parseInt(btn.dataset.time)));
+});
+</script>
+
+</body>
+</html>

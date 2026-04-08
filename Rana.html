@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Rana Divertente 🐸</title>
+<style>
+  body { text-align:center; font-family: Arial; background: #d0f0c0; }
+  h1 { color: #2e8b57; }
+  #gameArea { width: 320px; height: 400px; margin:auto; background: #a2d5a2; border-radius: 20px; position: relative; overflow: hidden; }
+  #frog { font-size: 60px; position: absolute; left: 130px; top: 300px; cursor:pointer; transition: 0.2s; }
+  #score { margin: 10px; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<h1>Rana Divertente 🐸</h1>
+<div id="score">Punti: 0</div>
+<div id="gameArea">
+  <div id="frog">🐸</div>
+</div>
+
+<script>
+let frog = document.getElementById("frog");
+let gameArea = document.getElementById("gameArea");
+let score = 0;
+
+// Frasi divertenti in italiano
+let frasi = [
+  "Che bel salto, hai visto?",
+  "Occhio alla mosca!",
+  "Splash! Giusto in tempo.",
+  "Ribbit! Ancora un salto!",
+  "Wow, che agilità!",
+  "La rana è super felice!",
+  "Attento, c'è un lombrico!",
+  "Salto perfetto, campione!",
+  "Rana sprint: niente ti ferma!",
+  "Hai fatto ridere anche la rana!"
+];
+
+// Muove la rana e mostra frasi
+frog.onclick = function(){
+  // Sposta rana in posizione casuale
+  frog.style.top = Math.random()*300+"px";
+  frog.style.left = Math.random()*260+"px";
+
+  // Aumenta punteggio
+  score++;
+  document.getElementById("score").innerText = "Punti: "+score;
+
+  // Mostra frase divertente
+  let frase = frasi[Math.floor(Math.random()*frasi.length)];
+  let msg = document.createElement("div");
+  msg.innerText = frase;
+  msg.style.position = "absolute";
+  msg.style.left = (Math.random()*200)+"px";
+  msg.style.top = (Math.random()*350)+"px";
+  msg.style.fontSize = "14px";
+  msg.style.color = "#004d00";
+  msg.style.fontWeight = "bold";
+  gameArea.appendChild(msg);
+
+  // Scompare dopo 1.5 secondi
+  setTimeout(()=>{ msg.remove(); },1500);
+};
+</script>
+
+</body>
+</html>

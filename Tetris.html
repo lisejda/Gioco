@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Tetris</title>
+<style>
+body {
+  margin:0; padding:0;
+  font-family: Arial, sans-serif;
+  text-align:center;
+  background: #87ceeb;
+}
+h1 { color:#ff3366; margin-top:10px; }
+#gameArea {
+  width: 200px;
+  height: 400px;
+  margin:auto;
+  display: grid;
+  grid-template-rows: repeat(20, 20px);
+  grid-template-columns: repeat(10, 20px);
+  background: #fff;
+  border: 4px solid #ff3366;
+}
+.cell {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size:18px;
+  line-height:20px;
+}
+#score { color:#ff3366; font-size:20px; margin:5px; }
+#message { font-size:20px; color:#ff3366; margin-top:10px; }
+button { font-size:24px; margin:5px; padding:5px 10px; border-radius:5px; background:#ff3366; color:white; border:none; }
+</style>
+</head>
+<body>
+
+<h1>Tetris</h1>
+<div id="score">Punti: 0</div>
+<div id="gameArea"></div>
+<div>
+<button id="left">⬅️</button>
+<button id="right">➡️</button>
+<button id="down">⬇️</button>
+</div>
+<div id="message"></div>
+
+<script>
+const ROWS = 20;
+const COLS = 10;
+const gameArea = document.getElementById('gameArea');
+const scoreEl = document.getElementById('score');
+const messageEl = document.getElementById('message');
+
+let grid = [];
+let score = 0;
+const EMOJI = ['💖','🌸','🐸','🍀','🦄','🍎'];
+
+// Creazione griglia
+for(let r=0;r<ROWS;r++){
+  for(let c=0;c<COLS;c++){
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+    gameArea.appendChild(cell);
+    grid.push(cell);
+  }
+}
+
+// Blocchi Tetris
+const SHAPES = [
+  [[1,1,1,1]], // I
+  [[1,1],[1,1]], // O
+  [[0,1,0],[1,1,1]], // T
+  [[1,1,0],[0,1,1]], // S
+  [[0,1,1],[1,1,0]]  // Z
+];
+
+let current = null;
+let currentRow = 0;
+let currentCol = 3;
+
+function newBlock(){
+  current = SHAPES[Math.floor(Math.random()*SHAPES.length)];
+  currentRow = 0;
+  currentCol = 3;
+  draw();
+}
+
+function draw(){
+  clear();
+  for(let r=0;r<current.length;r++){
+    for(let c=0;c<current[r].length;c++){
+      if(current[r][c]){
+        const row = currentRow + r;
+        const col = currentCol + c;
+        if(row<ROWS && col<COLS){
+          grid[row*COLS+col].innerText = '⬛';
+        }
+      }
+    }
+  }
+}
+
+function clear(){
+  grid.forEach(cell=>{
+    if(cell.innerText==='⬛'){
+      cell.innerText='';
+    }
+  });
+}
+
+function collision(){
+  for(let r=0;r<current.length;r++){
+    for(let c=0;c<current[r].length;c++){
+      if(current[r][c]){
+        const row = currentRow + r;
+        const col = currentCol + c;
+        if(row>=ROWS || col<0 || col>=COLS) return true;
+        if(grid[row*COLS+col].innerText==='⬜') return true;
+      }
+    }
+  }
+  return false;
+}
+
+function merge(){
+  for(let r=0;r<current.length;r++){
+    for(let c=0;c<current[r].length;c++){
+      if(current[r][c]){
+        grid[(currentRow+r)*COLS+currentCol+c].innerText='⬜';
+      }
+    }
+  }
+}
+
+function clearLines(){
+  for(let r=ROWS-1;r>=0;r--){
+    let full = true;
+    for(let c=0;c<COLS;c++){
+      if(grid[r*COLS+c].innerText!=='⬜'){ full=false; break; }
+    }
+    if(full){
+      for(let c=0;c<COLS;c++){
+        grid[r*COLS+c].innerText = EMOJI[Math.floor(Math.random()*EMOJI.length)];
+      }
+      score += 10;
+      scoreEl.innerText = 'Punti: '+score;
+      for(let row=r;row>0;row--){
+        for(let col=0;col<COLS;col++){
+          grid[row*COLS+col].innerText = grid[(row-1)*COLS+col].innerText;
+        }
+      }
+      for(let col=0;col<COLS;col++){
+        grid[col].innerText='';
+      }
+      r++;
+    }
+  }
+}
+
+function move(dir){
+  currentCol += dir;
+  if(collision()) currentCol -= dir;
+  draw();
+}
+
+function drop(){
+  currentRow++;
+  if(collision()){
+    currentRow--;
+    merge();
+    clearLines();
+    newBlock();
+  }
+  draw();
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') move(-1);
+  if(e.key==='ArrowRight') move(1);
+  if(e.key==='ArrowDown') drop();
+});
+
+document.getElementById('left').onclick = ()=>move(-1);
+document.getElementById('right').onclick = ()=>move(1);
+document.getElementById('down').onclick = ()=>drop();
+
+setInterval(drop, 800);
+
+newBlock();
+</script>
+
+</body>
+</html>
